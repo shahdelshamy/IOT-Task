@@ -1,0 +1,40 @@
+*{
+    box-sizing: border-box;
+}
+
+.form-container{
+    width: fit-content;
+    margin: 30px auto;
+}
+
+div{
+    margin-bottom: 10px;
+}
+
+
+input[type="text"],
+input[type="number"]{
+    height: 20px;
+    width: 150px;
+}
+
+label{
+    display: inline-block;
+    width: 50px;
+}
+
+.skill-content{
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.submit{
+    width: 160px;
+    height: 25px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 15px;
+}
+
+
