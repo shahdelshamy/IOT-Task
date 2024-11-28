@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <title>IOT Lab</title>
 </head>
 <body>
@@ -14,11 +14,11 @@
             <form action="">
                 <div class="name">
                     <label for="">Name:</label>
-                    <input type="text">
+                    <input type="text" class="name">
                 </div>
                 <div class="age">
                     <label for="">Age:</label>
-                    <input type="number">
+                    <input type="number" class="age">
                 </div>
                 <div class="gender">
                     <label for="">Gender:</label>
@@ -54,6 +54,83 @@
     </div>
 
 
-    <script src="main.js"></script>
+    <script>
+
+        const webSocket = new WebSocket('ws/localhost:9090');
+        
+        webSocket.onopen = () => {
+            console.log("WebSocket connected on the client side");
+        };
+        
+        let dataContent = document.querySelector(".data-content");
+
+        
+        
+        
+        document.querySelector(".submit").addEventListener("click", (event) => {
+            event.preventDefault();
+        
+            let name = document.querySelector('input[type="text"]').value;
+            let age = document.querySelector('input[type="number"]').value;
+            let gender = document.querySelector("[name='gender']:checked").value;
+            let skills = Array.from(document.querySelectorAll("[name='skills']:checked")).map(skill => skill.value).join(", ");
+
+
+            dataContent.innerHTML = `
+                <h2 class='data-title'>Your Data Is</h2>
+                <p><span>Name:</span> ${name}</p>
+                <p><span>Age:</span> ${age}</p>
+                <p><span>Gender:</span> ${gender}</p>
+                <p><span>Skills:</span> ${skills}</p>
+            `;
+        
+            let data = { name, age, gender, skills };
+        
+            // Only send data if WebSocket is open
+            if (webSocket.readyState === WebSocket.OPEN) {
+                webSocket.send(JSON.stringify(data)); 
+            } else {
+                console.log("WebSocket is not open. Current state:", webSocket.readyState);
+            }
+        });
+        
+        //receive data from server
+        webSocket.onmessage = (event) => {
+            console.log(event.data);
+            const serverMessage = JSON.parse(event.data);
+
+                // Set the form fields with the received data
+            document.querySelector('input[type="text"]').value = serverMessage.name || '';
+            document.querySelector('input[type="number"]').value = serverMessage.age || '';
+            
+            // Set the gender radio buttons
+            const genderRadioButtons = document.querySelectorAll("[name='gender']");
+            genderRadioButtons.forEach(radio => {
+                if (radio.value === serverMessage.gender) {
+                    radio.checked = true;
+                }
+            });
+
+            // Set the skills checkboxes
+            const skillCheckboxes = document.querySelectorAll("[name='skills']");
+            skillCheckboxes.forEach(checkbox => {
+                if (serverMessage.skills.includes(checkbox.value)) {
+                    checkbox.checked = true;
+                } else {
+                    checkbox.checked = false;
+                }
+            });
+
+            dataContent.innerHTML = `
+                <h2 class='data-title'>Your Data Is</h2>
+                <p><span>Name:</span> ${serverMessage.name}</p>
+                <p><span>Age:</span> ${serverMessage.age}</p>
+                <p><span>Gender:</span> ${serverMessage.gender}</p>
+                <p><span>Skills:</span> ${serverMessage.skills}</p>
+            `;
+        };
+        
+    </script>
+
 </body>
 </html>

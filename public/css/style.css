@@ -35,6 +35,28 @@ label{
     color: white;
     border: none;
     border-radius: 15px;
+    cursor: pointer;
 }
 
+.submit:hover{
+    background: #af0909;
+}
 
+.data-content{
+    width: fit-content;
+    margin: 10px auto;
+}
+
+.data-content .data-title{
+    border-bottom: 2px solid grey;
+    
+}
+
+.data-content p {
+    font-size: 17px;
+}
+
+.data-content p span{
+    font-weight: bold;
+    font-size: 18px;
+}
