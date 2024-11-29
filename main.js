@@ -1,49 +1,48 @@
 const express = require("express");
-const ws = require('ws');
+const ws = require("ws");
 
-// Create an instance of express
-const instance = express();
+const app = express();
 const port = 9090;
-const server = instance.listen(port, () => {
+
+
+const server = app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
-// WebSocket server setup
+
 const webSocket = new ws.Server({ server });
 
-let data=null;
+let users = []; 
 
-webSocket.on('connection', (socket) => {
-    console.log('WebSocket connected on server side');
+webSocket.on("connection", (socket) => {
+    console.log("New WebSocket connection");
 
-    if (data) {
-        socket.send(JSON.stringify(data));
-    }
+    
+    socket.send(JSON.stringify(users));
 
-    socket.on('message', (message) => {
-         data = JSON.parse(message);
+    
+    socket.on("message", (message) => {
+        const user = JSON.parse(message);
+        users.push(user); 
+        
 
         webSocket.clients.forEach((client) => {
             if (client.readyState === ws.OPEN) {
-                client.send(JSON.stringify({
-                    name: data.name,
-                    age: data.age,
-                    gender: data.gender,
-                    skills: data.skills
-                }));
-            } else {
-                console.error("Error: client not open");
+                client.send(JSON.stringify(user));
             }
         });
 
-        console.log('Received message:', message.toString());
+        console.log("New user added:", user);
+    });
+
+    socket.on("close", () => {
+        console.log("Client disconnected");
     });
 });
 
-// Serve static files (HTML, JS, etc.)
-instance.use(express.static(__dirname + "/public"));
 
-// Serve the HTML page at root
-instance.get("/", (request, response) => {
-    response.sendFile(__dirname + "/index.html");
+app.use(express.static(__dirname + "/public"));
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
 });

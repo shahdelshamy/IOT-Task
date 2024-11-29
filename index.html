@@ -7,39 +7,37 @@
     <title>IOT Lab</title>
 </head>
 <body>
-    
     <div class="container">
-
+        <!-- Form Container -->
         <div class="form-container">
-            <form action="">
-                <div class="name">
-                    <label for="">Name:</label>
-                    <input type="text" class="name">
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" class="name" required>
                 </div>
-                <div class="age">
-                    <label for="">Age:</label>
-                    <input type="number" class="age">
+                <div class="form-group">
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" class="age" required>
                 </div>
-                <div class="gender">
-                    <label for="">Gender:</label>
-                    <input type="radio" id="female" name="gender" value="female">
-                    <label for="female" >Female</label>
+                <div class="form-group gender">
+                    <label>Gender:</label>
+                    <input type="radio" id="female" name="gender" value="female" required>
+                    <label for="female">Female</label>
                     <input type="radio" id="male" name="gender" value="male">
                     <label for="male">Male</label>
                 </div>
-                <div class="skills">
+                <div class="form-group skills">
                     <label for="skills">Skills:</label>
                     <div class="skill-content">
-                        <input type="checkbox" name="skills" value="html" id="html">
+                        <input type="checkbox" name="skills" value="HTML" id="html">
                         <label for="html">HTML</label>
                         <br>
-                        <input type="checkbox" name="skills" value="css" id="css">
+                        <input type="checkbox" name="skills" value="CSS" id="css">
                         <label for="css">CSS</label>
                         <br>
-                        <input type="checkbox" name="skills" value="js" id="js">
-                        <label for="js">Js</label>
+                        <input type="checkbox" name="skills" value="JavaScript" id="js">
+                        <label for="js">JavaScript</label>
                     </div>
-
                 </div>
                 <button type="submit" class="submit">Submit</button>
             </form>
@@ -47,90 +45,72 @@
 
         <hr>
 
+        
         <div class="data-content">
-
+            <h2 class="data-title">Users List</h2>
+            <ul id="user-list"></ul>
         </div>
-
     </div>
 
-
     <script>
+        const webSocket = new WebSocket("ws://localhost:9090");
 
-        const webSocket = new WebSocket('ws/localhost:9090');
+        const userForm = document.getElementById("user-form");
+        const userList = document.getElementById("user-list");
+
         
         webSocket.onopen = () => {
             console.log("WebSocket connected on the client side");
         };
-        
-        let dataContent = document.querySelector(".data-content");
 
         
-        
-        
-        document.querySelector(".submit").addEventListener("click", (event) => {
-            event.preventDefault();
-        
-            let name = document.querySelector('input[type="text"]').value;
-            let age = document.querySelector('input[type="number"]').value;
-            let gender = document.querySelector("[name='gender']:checked").value;
-            let skills = Array.from(document.querySelectorAll("[name='skills']:checked")).map(skill => skill.value).join(", ");
-
-
-            dataContent.innerHTML = `
-                <h2 class='data-title'>Your Data Is</h2>
-                <p><span>Name:</span> ${name}</p>
-                <p><span>Age:</span> ${age}</p>
-                <p><span>Gender:</span> ${gender}</p>
-                <p><span>Skills:</span> ${skills}</p>
-            `;
-        
-            let data = { name, age, gender, skills };
-        
-            // Only send data if WebSocket is open
-            if (webSocket.readyState === WebSocket.OPEN) {
-                webSocket.send(JSON.stringify(data)); 
-            } else {
-                console.log("WebSocket is not open. Current state:", webSocket.readyState);
-            }
-        });
-        
-        //receive data from server
         webSocket.onmessage = (event) => {
-            console.log(event.data);
-            const serverMessage = JSON.parse(event.data);
+            const data = JSON.parse(event.data);
 
-                // Set the form fields with the received data
-            document.querySelector('input[type="text"]').value = serverMessage.name || '';
-            document.querySelector('input[type="number"]').value = serverMessage.age || '';
-            
-            // Set the gender radio buttons
-            const genderRadioButtons = document.querySelectorAll("[name='gender']");
-            genderRadioButtons.forEach(radio => {
-                if (radio.value === serverMessage.gender) {
-                    radio.checked = true;
-                }
-            });
-
-            // Set the skills checkboxes
-            const skillCheckboxes = document.querySelectorAll("[name='skills']");
-            skillCheckboxes.forEach(checkbox => {
-                if (serverMessage.skills.includes(checkbox.value)) {
-                    checkbox.checked = true;
-                } else {
-                    checkbox.checked = false;
-                }
-            });
-
-            dataContent.innerHTML = `
-                <h2 class='data-title'>Your Data Is</h2>
-                <p><span>Name:</span> ${serverMessage.name}</p>
-                <p><span>Age:</span> ${serverMessage.age}</p>
-                <p><span>Gender:</span> ${serverMessage.gender}</p>
-                <p><span>Skills:</span> ${serverMessage.skills}</p>
-            `;
+            if (Array.isArray(data)) {
+                
+                userList.innerHTML = ""; 
+                data.forEach((user) => appendUser(user));
+            } else {
+                
+                appendUser(data);
+            }
         };
-        
-    </script>
 
+        
+        function appendUser(user) {
+            const listItem = document.createElement("li");
+            listItem.innerHTML = `
+                <p><strong>Name:</strong> ${user.name}</p>
+                <p><strong>Age:</strong> ${user.age}</p>
+                <p><strong>Gender:</strong> ${user.gender}</p>
+                <p><strong>Skills:</strong> ${user.skills.join(", ")}</p>
+                <hr>
+            `;
+            userList.appendChild(listItem);
+        }
+
+        
+        userForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            
+            const name = document.getElementById("name").value;
+            const age = document.getElementById("age").value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const skills = Array.from(document.querySelectorAll('input[name="skills"]:checked')).map(
+                (checkbox) => checkbox.value
+            );
+
+            const user = { name, age, gender, skills };
+
+            if (webSocket.readyState === WebSocket.OPEN) {
+                webSocket.send(JSON.stringify(user));
+            }
+
+            
+            userForm.reset();
+        });
+    </script>
 </body>
 </html>
